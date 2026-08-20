@@ -72,6 +72,7 @@ body {
   accent-color: #0b1f3a;
 }
 
+.rsvp-form input[type="text"],
 .rsvp-form input[type="number"],
 .rsvp-form textarea {
   display: block;
@@ -389,7 +390,12 @@ body {
       action="https://script.google.com/macros/s/AKfycbyVmAYGAu6Wr3tbgkmXmgNlRjU_TaUYdrW-ZJPViwaNaqM40fPieA21tfIakd3AFumQ/exec"
       method="post"
       target="rsvp-response-frame">
-      <h2>RSVP to Ari's bar mitzvah</h2>
+      <h2>RSVP to Ari's Bar Mitzvah</h2>
+
+      <div class="rsvp-question">
+        <label for="respondent-name">What is your name? <span class="required-marker" aria-hidden="true">*</span></label>
+        <input id="respondent-name" type="text" name="respondentName" autocomplete="name" required>
+      </div>
 
       <fieldset class="rsvp-question">
         <legend>Can you attend? <span class="required-marker" aria-hidden="true">*</span></legend>
@@ -406,18 +412,18 @@ body {
       <div id="attendance-details" hidden>
         <div class="rsvp-question">
           <label for="guest-count">How many people will attend Shabbat lunch? <span class="required-marker" aria-hidden="true">*</span></label>
-          <input id="guest-count" type="number" name="guestCount" min="0" step="1" inputmode="numeric">
+          <input id="guest-count" type="number" name="guestCount" min="1" step="1" inputmode="numeric">
         </div>
 
-        <div class="rsvp-question">
-          <label for="guest-names">What are the names of the guests? <span class="required-marker" aria-hidden="true">*</span></label>
-          <textarea id="guest-names" name="guestNames"></textarea>
+        <div id="additional-guests-question" class="rsvp-question" hidden>
+          <label for="additional-guest-names">What are the names of the additional guests? <span class="required-marker" aria-hidden="true">*</span></label>
+          <textarea id="additional-guest-names" name="additionalGuestNames"></textarea>
         </div>
 
       </div>
 
       <div class="rsvp-question">
-        <label for="host-message">Leave a message for your hosts</label>
+        <label for="host-message">Send a message to Ari and the Straus family</label>
         <textarea id="host-message" name="message"></textarea>
       </div>
 
@@ -472,7 +478,8 @@ body {
     const attendanceOptions = rsvpForm.querySelectorAll('input[name="attendance"]');
     const attendanceDetails = document.getElementById('attendance-details');
     const guestCount = document.getElementById('guest-count');
-    const guestNames = document.getElementById('guest-names');
+    const additionalGuestsQuestion = document.getElementById('additional-guests-question');
+    const additionalGuestNames = document.getElementById('additional-guest-names');
     let rsvpSubmitted = false;
     let rsvpSubmissionTimeout;
     let easterEggFlightTimeout;
@@ -551,22 +558,30 @@ body {
     const updateAttendanceDetails = () => {
       const selectedAttendance = rsvpForm.querySelector('input[name="attendance"]:checked');
       const attending = selectedAttendance && selectedAttendance.value === 'Yes';
+      const hasAdditionalGuests = attending && Number(guestCount.value) > 1;
 
       attendanceDetails.hidden = !attending;
       guestCount.required = attending;
-      guestNames.required = attending;
+      guestCount.disabled = !attending;
+      additionalGuestsQuestion.hidden = !hasAdditionalGuests;
+      additionalGuestNames.required = hasAdditionalGuests;
+      additionalGuestNames.disabled = !hasAdditionalGuests;
 
       if (attending) {
         if (guestCount.value === '0') guestCount.value = '';
       } else {
         guestCount.value = '0';
-        guestNames.value = '';
+      }
+
+      if (!hasAdditionalGuests) {
+        additionalGuestNames.value = '';
       }
     };
 
     attendanceOptions.forEach((option) => {
       option.addEventListener('change', updateAttendanceDetails);
     });
+    guestCount.addEventListener('input', updateAttendanceDetails);
     updateAttendanceDetails();
 
     rsvpForm.addEventListener('submit', () => {
