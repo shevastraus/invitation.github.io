@@ -1,4 +1,4 @@
-const SPREADSHEET_ID = 'PASTE_YOUR_SPREADSHEET_ID_HERE';
+const SPREADSHEET_ID = '1SFOCh8OpZaKZPiRBAhbZsWUJqrwFAzw6VaF6V_FD4W0';
 const SHEET_NAME = 'Form Responses 1';
 const WEBSITE_ORIGIN = 'https://shevastraus.com';
 
@@ -31,13 +31,15 @@ function parseResponse_(parameters) {
     throw new Error('Guest count must be a whole number.');
   }
 
-  if (!guestNames) {
-    throw new Error('Guest names are required.');
+  const guestCountNumber = Number(guestCount);
+
+  if (guestCountNumber > 0 && !guestNames) {
+    throw new Error('Guest names are required when the guest count is greater than zero.');
   }
 
   return {
     attendance,
-    guestCount: Number(guestCount),
+    guestCount: guestCountNumber,
     guestNames,
     message,
   };

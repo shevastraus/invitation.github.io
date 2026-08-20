@@ -265,9 +265,9 @@ body {
         <input id="guest-count" type="number" name="guestCount" min="0" step="1" inputmode="numeric" required>
       </div>
 
-      <div class="rsvp-question">
-        <label for="guest-names">What are the names of the guests? <span class="required-marker" aria-hidden="true">*</span></label>
-        <textarea id="guest-names" name="guestNames" required></textarea>
+      <div id="guest-names-question" class="rsvp-question" hidden>
+        <label for="guest-names">What are the names of the guests? <span id="guest-names-required" class="required-marker" aria-hidden="true" hidden>*</span></label>
+        <textarea id="guest-names" name="guestNames"></textarea>
       </div>
 
       <div class="rsvp-question">
@@ -306,6 +306,10 @@ body {
     const rsvpResponseFrame = document.getElementById('rsvp-response-frame');
     const rsvpSubmitButton = rsvpForm.querySelector('.rsvp-submit');
     const rsvpError = document.getElementById('rsvp-error');
+    const guestCount = document.getElementById('guest-count');
+    const guestNames = document.getElementById('guest-names');
+    const guestNamesQuestion = document.getElementById('guest-names-question');
+    const guestNamesRequiredMarker = document.getElementById('guest-names-required');
     let rsvpSubmitted = false;
     let rsvpSubmissionTimeout;
     let touchStartX = 0;
@@ -364,6 +368,20 @@ body {
       rsvpError.hidden = false;
       rsvpError.focus();
     };
+
+    const updateGuestNamesRequirement = () => {
+      const namesAreRequired = Number(guestCount.value) > 0;
+      guestNames.required = namesAreRequired;
+      guestNamesQuestion.hidden = !namesAreRequired;
+      guestNamesRequiredMarker.hidden = !namesAreRequired;
+
+      if (!namesAreRequired) {
+        guestNames.value = '';
+      }
+    };
+
+    guestCount.addEventListener('input', updateGuestNamesRequirement);
+    updateGuestNamesRequirement();
 
     rsvpForm.addEventListener('submit', () => {
       rsvpSubmitted = true;
