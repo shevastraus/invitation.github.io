@@ -198,6 +198,16 @@ body {
   margin: 0 auto;
   border: 0;
 }
+
+@media (min-width: 768px) {
+  .markdown-body img.invitation-image {
+    width: auto;
+    max-width: min(100%, 565px);
+    max-height: calc(100vh - 7.5rem);
+    max-height: calc(100dvh - 7.5rem);
+    object-fit: contain;
+  }
+}
 </style>
 
   <div class="invitation-tabs" role="tablist" aria-label="Invitation pages">
@@ -240,7 +250,7 @@ body {
       </fieldset>
 
       <div class="rsvp-question">
-        <label for="guest-count">How many people will attend? <span class="required-marker" aria-hidden="true">*</span></label>
+        <label for="guest-count">How many people will attend Shabbat lunch? <span class="required-marker" aria-hidden="true">*</span></label>
         <input id="guest-count" type="number" name="entry.439420570" min="0" step="1" inputmode="numeric" required>
       </div>
 
@@ -295,6 +305,8 @@ body {
       tabPanels.forEach((panel) => {
         panel.hidden = panel.id !== selectedPanelId;
       });
+
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     };
 
     tabs.forEach((tab) => {
@@ -324,7 +336,7 @@ body {
 
         if (!isHorizontalSwipe) return;
 
-        selectPanel(horizontalDistance > 0 ? 'rsvp-panel' : 'invitation-panel');
+        selectPanel(horizontalDistance < 0 ? 'rsvp-panel' : 'invitation-panel');
       }, { passive: true });
     });
 
