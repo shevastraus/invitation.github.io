@@ -1,7 +1,7 @@
 ---
 permalink: /arisbarmitzvah/
 title: "You are invited to Ari's bar mitzvah!"
-description: "Please RSVP using this form."
+description: "We look forward to receiving your response"
 ---
 
 <style>
