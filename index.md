@@ -144,17 +144,24 @@ body {
   top: 35vh;
   left: 0;
   z-index: 1000;
-  width: clamp(8rem, 24vw, 12rem);
+  width: clamp(4.5rem, 14vw, 7rem);
   aspect-ratio: 1;
   pointer-events: none;
-  animation: rsvp-bird-flight 3.2s ease-in-out infinite;
+  animation: rsvp-bird-flight 5s linear infinite;
 }
 
 .rsvp-bird-flight[hidden] {
   display: none;
 }
 
-.rsvp-bird-flight::before {
+.rsvp-bird-flight-motion {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  animation: rsvp-bird-bob 1.25s ease-in-out infinite alternate;
+}
+
+.rsvp-bird-flight-motion::before {
   position: absolute;
   inset: 25%;
   border-radius: 50%;
@@ -174,6 +181,12 @@ body {
   animation: rsvp-bird-flap 0.45s steps(1, end) infinite;
 }
 
+.markdown-body img.rsvp-bird-frame {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .rsvp-bird-frame:nth-child(2) { animation-delay: -0.3s; }
 .rsvp-bird-frame:nth-child(3) { animation-delay: -0.15s; }
 
@@ -184,11 +197,13 @@ body {
 }
 
 @keyframes rsvp-bird-flight {
-  0% { transform: translate3d(-13rem, 4vh, 0) rotate(-4deg); }
-  25% { transform: translate3d(25vw, -2vh, 0) rotate(2deg); }
-  50% { transform: translate3d(50vw, 2vh, 0) rotate(-2deg); }
-  75% { transform: translate3d(75vw, -3vh, 0) rotate(2deg); }
-  100% { transform: translate3d(calc(100vw + 13rem), 1vh, 0) rotate(-3deg); }
+  0% { transform: translate3d(-13rem, 0, 0); }
+  80%, 100% { transform: translate3d(calc(100vw + 13rem), 0, 0); }
+}
+
+@keyframes rsvp-bird-bob {
+  from { transform: translate3d(0, -1.25rem, 0) rotate(-2deg); }
+  to { transform: translate3d(0, 1.25rem, 0) rotate(2deg); }
 }
 
 @keyframes rsvp-bird-flap {
@@ -213,7 +228,8 @@ body {
     transform: translateX(-50%);
   }
 
-  .rsvp-bird-flight::before,
+  .rsvp-bird-flight-motion,
+  .rsvp-bird-flight-motion::before,
   .rsvp-bird-frame {
     animation: none;
   }
@@ -243,6 +259,31 @@ body {
   margin-top: 0;
 }
 
+.rsvp-confirmation-bird-button {
+  display: block;
+  margin: 0.75rem auto 1rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.rsvp-confirmation-bird-button:focus-visible {
+  border-radius: 50%;
+  outline: 3px solid #8fb7df;
+  outline-offset: 4px;
+}
+
+.markdown-body img.rsvp-confirmation-bird {
+  display: block;
+  width: clamp(6rem, 25vw, 10rem);
+  height: auto;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .invitation-tabs {
   display: flex;
   justify-content: center;
@@ -250,7 +291,8 @@ body {
   margin-bottom: 1.5rem;
 }
 
-.tab-panel + .invitation-tabs {
+.tab-panel + .invitation-tabs,
+.rsvp-bird-flight + .invitation-tabs {
   margin-top: 1.5rem;
 }
 
@@ -386,20 +428,26 @@ body {
       <p id="rsvp-submission-status" class="rsvp-submission-status" role="status" aria-live="polite" hidden>
         Please wait while we save your RSVP.
       </p>
-      <div id="rsvp-bird-flight" class="rsvp-bird-flight" aria-hidden="true" hidden>
-        <img class="rsvp-bird-frame" src="/rsvp-bird-wings-up.png" alt="">
-        <img class="rsvp-bird-frame" src="/rsvp-bird-wings-out.png" alt="">
-        <img class="rsvp-bird-frame" src="/rsvp-bird-wings-down.png" alt="">
-      </div>
     </form>
 
     <div id="rsvp-confirmation" class="rsvp-confirmation" role="status" tabindex="-1" hidden>
       <h2>Thank you!</h2>
+      <button id="rsvp-confirmation-bird-button" class="rsvp-confirmation-bird-button" type="button" aria-label="Send the bird flying again">
+        <img class="rsvp-confirmation-bird" src="/rsvp-bird-wings-out.png" alt="">
+      </button>
       <p>Your RSVP has been submitted.</p>
     </div>
 
     <iframe id="rsvp-response-frame" name="rsvp-response-frame" title="RSVP submission response" hidden></iframe>
   </section>
+
+  <div id="rsvp-bird-flight" class="rsvp-bird-flight" aria-hidden="true" hidden>
+    <div class="rsvp-bird-flight-motion">
+      <img class="rsvp-bird-frame" src="/rsvp-bird-wings-up.png" alt="">
+      <img class="rsvp-bird-frame" src="/rsvp-bird-wings-out.png" alt="">
+      <img class="rsvp-bird-frame" src="/rsvp-bird-wings-down.png" alt="">
+    </div>
+  </div>
 
   <div class="invitation-tabs" role="tablist" aria-label="Invitation pages">
     <button type="button" role="tab" aria-selected="true" aria-controls="invitation-panel">
@@ -420,12 +468,14 @@ body {
     const rsvpError = document.getElementById('rsvp-error');
     const rsvpSubmissionStatus = document.getElementById('rsvp-submission-status');
     const rsvpBirdFlight = document.getElementById('rsvp-bird-flight');
+    const rsvpConfirmationBirdButton = document.getElementById('rsvp-confirmation-bird-button');
     const attendanceOptions = rsvpForm.querySelectorAll('input[name="attendance"]');
     const attendanceDetails = document.getElementById('attendance-details');
     const guestCount = document.getElementById('guest-count');
     const guestNames = document.getElementById('guest-names');
     let rsvpSubmitted = false;
     let rsvpSubmissionTimeout;
+    let easterEggFlightTimeout;
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartedOnControl = false;
@@ -448,6 +498,17 @@ body {
       tab.addEventListener('click', () => {
         selectPanel(tab.getAttribute('aria-controls'));
       });
+    });
+
+    rsvpConfirmationBirdButton.addEventListener('click', () => {
+      clearTimeout(easterEggFlightTimeout);
+      rsvpBirdFlight.hidden = true;
+      void rsvpBirdFlight.offsetWidth;
+      rsvpBirdFlight.hidden = false;
+
+      easterEggFlightTimeout = setTimeout(() => {
+        rsvpBirdFlight.hidden = true;
+      }, 4000);
     });
 
     tabPanels.forEach((panel) => {
