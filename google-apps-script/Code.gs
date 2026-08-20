@@ -19,23 +19,28 @@ function doPost(event) {
 
 function parseResponse_(parameters) {
   const attendance = String(parameters.attendance || '').trim();
-  const guestCount = String(parameters.guestCount || '').trim();
-  const guestNames = String(parameters.guestNames || '').trim();
-  const message = String(parameters.message || '').trim();
+  let guestCount = String(parameters.guestCount || '').trim();
+  let guestNames = String(parameters.guestNames || '').trim();
+  let message = String(parameters.message || '').trim();
 
   if (!['Yes', 'No'].includes(attendance)) {
     throw new Error('A valid attendance response is required.');
   }
 
-  if (!/^\d+$/.test(guestCount)) {
-    throw new Error('Guest count must be a whole number.');
+  if (attendance === 'Yes') {
+    if (!/^\d+$/.test(guestCount)) {
+      throw new Error('Guest count must be a whole number.');
+    }
+
+    if (!guestNames) {
+      throw new Error('Guest names are required for attendees.');
+    }
+  } else {
+    guestCount = '0';
+    guestNames = '';
   }
 
   const guestCountNumber = Number(guestCount);
-
-  if (guestCountNumber > 0 && !guestNames) {
-    throw new Error('Guest names are required when the guest count is greater than zero.');
-  }
 
   return {
     attendance,

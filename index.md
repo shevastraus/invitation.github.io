@@ -256,18 +256,21 @@ body {
         </label>
         <label class="radio-option">
           <input type="radio" name="attendance" value="No" required>
-          <span>Sorry, can't make it</span>
+          <span>No, can't make it</span>
         </label>
       </fieldset>
 
-      <div class="rsvp-question">
-        <label for="guest-count">How many people will attend Shabbat lunch? <span class="required-marker" aria-hidden="true">*</span></label>
-        <input id="guest-count" type="number" name="guestCount" min="0" step="1" inputmode="numeric" required>
-      </div>
+      <div id="attendance-details" hidden>
+        <div class="rsvp-question">
+          <label for="guest-count">How many people will attend Shabbat lunch? <span class="required-marker" aria-hidden="true">*</span></label>
+          <input id="guest-count" type="number" name="guestCount" min="0" step="1" inputmode="numeric">
+        </div>
 
-      <div id="guest-names-question" class="rsvp-question" hidden>
-        <label for="guest-names">What are the names of the guests? <span id="guest-names-required" class="required-marker" aria-hidden="true" hidden>*</span></label>
-        <textarea id="guest-names" name="guestNames"></textarea>
+        <div class="rsvp-question">
+          <label for="guest-names">What are the names of the guests? <span class="required-marker" aria-hidden="true">*</span></label>
+          <textarea id="guest-names" name="guestNames"></textarea>
+        </div>
+
       </div>
 
       <div class="rsvp-question">
@@ -306,10 +309,10 @@ body {
     const rsvpResponseFrame = document.getElementById('rsvp-response-frame');
     const rsvpSubmitButton = rsvpForm.querySelector('.rsvp-submit');
     const rsvpError = document.getElementById('rsvp-error');
+    const attendanceOptions = rsvpForm.querySelectorAll('input[name="attendance"]');
+    const attendanceDetails = document.getElementById('attendance-details');
     const guestCount = document.getElementById('guest-count');
     const guestNames = document.getElementById('guest-names');
-    const guestNamesQuestion = document.getElementById('guest-names-question');
-    const guestNamesRequiredMarker = document.getElementById('guest-names-required');
     let rsvpSubmitted = false;
     let rsvpSubmissionTimeout;
     let touchStartX = 0;
@@ -369,19 +372,26 @@ body {
       rsvpError.focus();
     };
 
-    const updateGuestNamesRequirement = () => {
-      const namesAreRequired = Number(guestCount.value) > 0;
-      guestNames.required = namesAreRequired;
-      guestNamesQuestion.hidden = !namesAreRequired;
-      guestNamesRequiredMarker.hidden = !namesAreRequired;
+    const updateAttendanceDetails = () => {
+      const selectedAttendance = rsvpForm.querySelector('input[name="attendance"]:checked');
+      const attending = selectedAttendance && selectedAttendance.value === 'Yes';
 
-      if (!namesAreRequired) {
+      attendanceDetails.hidden = !attending;
+      guestCount.required = attending;
+      guestNames.required = attending;
+
+      if (attending) {
+        if (guestCount.value === '0') guestCount.value = '';
+      } else {
+        guestCount.value = '0';
         guestNames.value = '';
       }
     };
 
-    guestCount.addEventListener('input', updateGuestNamesRequirement);
-    updateGuestNamesRequirement();
+    attendanceOptions.forEach((option) => {
+      option.addEventListener('change', updateAttendanceDetails);
+    });
+    updateAttendanceDetails();
 
     rsvpForm.addEventListener('submit', () => {
       rsvpSubmitted = true;
