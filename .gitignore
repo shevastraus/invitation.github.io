@@ -1,0 +1,19 @@
+# Jekyll-generated output and caches
+_site/
+.jekyll-cache/
+.jekyll-metadata
+.sass-cache/
+
+# Local Bundler files
+.bundle/
+vendor/
+
+# Editable invitation source and conversion files
+*.pdf
+*.pptx
+create_editable_invitation.py
+bar-mitzvah-invitation-background.png
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
