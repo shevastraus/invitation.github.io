@@ -110,11 +110,6 @@ body {
   font-weight: 600;
 }
 
-.rsvp-submit:hover {
-  background: #dce8f5;
-  color: #72acde;
-}
-
 .rsvp-submit:focus-visible {
   outline: 3px solid #8fb7df;
   outline-offset: 2px;
@@ -164,15 +159,6 @@ body {
   color: #fff;
 }
 
-.invitation-tabs button:hover {
-  background: #dce8f5;
-}
-
-.invitation-tabs button[aria-selected="true"]:hover {
-  background: #dce8f5;
-  color: #72acde;
-}
-
 .invitation-tabs button:focus-visible {
   outline: 3px solid #8fb7df;
   outline-offset: 2px;
@@ -180,6 +166,28 @@ body {
 
 .tab-panel[hidden] {
   display: none;
+}
+
+@media (max-width: 767px) {
+  .tab-panel {
+    touch-action: pan-y;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rsvp-submit:hover {
+    background: #dce8f5;
+    color: #72acde;
+  }
+
+  .invitation-tabs button:hover {
+    background: #dce8f5;
+  }
+
+  .invitation-tabs button[aria-selected="true"]:hover {
+    background: #dce8f5;
+    color: #72acde;
+  }
 }
 
 .markdown-body img.invitation-image {
@@ -273,21 +281,51 @@ body {
     const rsvpConfirmation = document.getElementById('rsvp-confirmation');
     const rsvpResponseFrame = document.getElementById('rsvp-response-frame');
     let rsvpSubmitted = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartedOnControl = false;
+
+    const selectPanel = (selectedPanelId) => {
+      tabs.forEach((item) => {
+        const selected = item.getAttribute('aria-controls') === selectedPanelId;
+        item.setAttribute('aria-selected', selected);
+        item.tabIndex = selected ? 0 : -1;
+      });
+
+      tabPanels.forEach((panel) => {
+        panel.hidden = panel.id !== selectedPanelId;
+      });
+    };
 
     tabs.forEach((tab) => {
       tab.addEventListener('click', () => {
-        const selectedPanelId = tab.getAttribute('aria-controls');
-
-        tabs.forEach((item) => {
-          const selected = item.getAttribute('aria-controls') === selectedPanelId;
-          item.setAttribute('aria-selected', selected);
-          item.tabIndex = selected ? 0 : -1;
-        });
-
-        tabPanels.forEach((panel) => {
-          panel.hidden = panel.id !== selectedPanelId;
-        });
+        selectPanel(tab.getAttribute('aria-controls'));
       });
+    });
+
+    tabPanels.forEach((panel) => {
+      panel.addEventListener('touchstart', (event) => {
+        if (event.touches.length !== 1) return;
+
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+        touchStartedOnControl = Boolean(event.target.closest('input, textarea, button, select, a'));
+      }, { passive: true });
+
+      panel.addEventListener('touchend', (event) => {
+        if (touchStartedOnControl
+          || !window.matchMedia('(max-width: 767px)').matches
+          || event.changedTouches.length !== 1) return;
+
+        const horizontalDistance = event.changedTouches[0].clientX - touchStartX;
+        const verticalDistance = event.changedTouches[0].clientY - touchStartY;
+        const isHorizontalSwipe = Math.abs(horizontalDistance) >= 60
+          && Math.abs(horizontalDistance) > Math.abs(verticalDistance) * 1.5;
+
+        if (!isHorizontalSwipe) return;
+
+        selectPanel(horizontalDistance > 0 ? 'rsvp-panel' : 'invitation-panel');
+      }, { passive: true });
     });
 
     rsvpForm.addEventListener('submit', () => {
