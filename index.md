@@ -120,6 +120,107 @@ body {
   opacity: 0.65;
 }
 
+.rsvp-submit.is-submitting::before {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 0.55rem;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  content: "";
+  vertical-align: -0.1em;
+  animation: rsvp-spinner 0.75s linear infinite;
+}
+
+.rsvp-submission-status {
+  margin: 0.75rem 0 0;
+  color: #526b86;
+  text-align: center;
+}
+
+.rsvp-bird-flight {
+  position: fixed;
+  top: 35vh;
+  left: 0;
+  z-index: 1000;
+  width: clamp(8rem, 24vw, 12rem);
+  aspect-ratio: 1;
+  pointer-events: none;
+  animation: rsvp-bird-flight 3.2s ease-in-out infinite;
+}
+
+.rsvp-bird-flight[hidden] {
+  display: none;
+}
+
+.rsvp-bird-flight::before {
+  position: absolute;
+  inset: 25%;
+  border-radius: 50%;
+  background: rgba(114, 172, 222, 0.22);
+  content: "";
+  animation: rsvp-bird-pulse 1s ease-in-out infinite;
+}
+
+.rsvp-bird-frame {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  animation: rsvp-bird-flap 0.45s steps(1, end) infinite;
+}
+
+.rsvp-bird-frame:nth-child(2) { animation-delay: -0.3s; }
+.rsvp-bird-frame:nth-child(3) { animation-delay: -0.15s; }
+
+@keyframes rsvp-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rsvp-bird-flight {
+  0% { transform: translate3d(-13rem, 4vh, 0) rotate(-4deg); }
+  25% { transform: translate3d(25vw, -2vh, 0) rotate(2deg); }
+  50% { transform: translate3d(50vw, 2vh, 0) rotate(-2deg); }
+  75% { transform: translate3d(75vw, -3vh, 0) rotate(2deg); }
+  100% { transform: translate3d(calc(100vw + 13rem), 1vh, 0) rotate(-3deg); }
+}
+
+@keyframes rsvp-bird-flap {
+  0%, 32% { opacity: 1; }
+  33%, 100% { opacity: 0; }
+}
+
+@keyframes rsvp-bird-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.75); }
+  50% { opacity: 0.8; transform: scale(1.25); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsvp-submit.is-submitting::before {
+    animation: none;
+  }
+
+  .rsvp-bird-flight {
+    top: 40vh;
+    left: 50%;
+    animation: none;
+    transform: translateX(-50%);
+  }
+
+  .rsvp-bird-flight::before,
+  .rsvp-bird-frame {
+    animation: none;
+  }
+
+  .rsvp-bird-frame:nth-child(2) { opacity: 1; }
+}
+
 .rsvp-error {
   margin: 0 0 1rem;
   color: #a23a3a;
@@ -186,7 +287,7 @@ body {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .rsvp-submit:hover {
+  .rsvp-submit:not(:disabled):hover {
     background: #dce8f5;
     color: #72acde;
   }
@@ -282,6 +383,14 @@ body {
         We couldn't submit your RSVP. Please try again.
       </p>
       <button class="rsvp-submit" type="submit">Submit</button>
+      <p id="rsvp-submission-status" class="rsvp-submission-status" role="status" aria-live="polite" hidden>
+        Please wait while we save your RSVP.
+      </p>
+      <div id="rsvp-bird-flight" class="rsvp-bird-flight" aria-hidden="true" hidden>
+        <img class="rsvp-bird-frame" src="/rsvp-bird-wings-up.png" alt="">
+        <img class="rsvp-bird-frame" src="/rsvp-bird-wings-out.png" alt="">
+        <img class="rsvp-bird-frame" src="/rsvp-bird-wings-down.png" alt="">
+      </div>
     </form>
 
     <div id="rsvp-confirmation" class="rsvp-confirmation" role="status" tabindex="-1" hidden>
@@ -309,6 +418,8 @@ body {
     const rsvpResponseFrame = document.getElementById('rsvp-response-frame');
     const rsvpSubmitButton = rsvpForm.querySelector('.rsvp-submit');
     const rsvpError = document.getElementById('rsvp-error');
+    const rsvpSubmissionStatus = document.getElementById('rsvp-submission-status');
+    const rsvpBirdFlight = document.getElementById('rsvp-bird-flight');
     const attendanceOptions = rsvpForm.querySelectorAll('input[name="attendance"]');
     const attendanceDetails = document.getElementById('attendance-details');
     const guestCount = document.getElementById('guest-count');
@@ -367,7 +478,11 @@ body {
     const showSubmissionError = () => {
       rsvpSubmitted = false;
       rsvpSubmitButton.disabled = false;
+      rsvpSubmitButton.classList.remove('is-submitting');
       rsvpSubmitButton.textContent = 'Submit';
+      rsvpForm.setAttribute('aria-busy', 'false');
+      rsvpSubmissionStatus.hidden = true;
+      rsvpBirdFlight.hidden = true;
       rsvpError.hidden = false;
       rsvpError.focus();
     };
@@ -397,7 +512,11 @@ body {
       rsvpSubmitted = true;
       rsvpError.hidden = true;
       rsvpSubmitButton.disabled = true;
-      rsvpSubmitButton.textContent = 'Submitting…';
+      rsvpSubmitButton.classList.add('is-submitting');
+      rsvpSubmitButton.textContent = 'Submitting RSVP…';
+      rsvpForm.setAttribute('aria-busy', 'true');
+      rsvpSubmissionStatus.hidden = false;
+      rsvpBirdFlight.hidden = false;
 
       clearTimeout(rsvpSubmissionTimeout);
       rsvpSubmissionTimeout = setTimeout(showSubmissionError, 15000);
@@ -428,6 +547,9 @@ body {
       }
 
       rsvpSubmitted = false;
+      rsvpForm.setAttribute('aria-busy', 'false');
+      rsvpSubmissionStatus.hidden = true;
+      rsvpBirdFlight.hidden = true;
       rsvpForm.hidden = true;
       rsvpConfirmation.hidden = false;
       rsvpConfirmation.focus();
