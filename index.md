@@ -5,8 +5,16 @@ description: "Please RSVP using this form."
 ---
 
 <style>
+html,
 body {
+  min-height: 100%;
+  background-color: #dce8f5;
   background-image: url("/background.png?v=blue-1");
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .rsvp-form {
@@ -184,21 +192,6 @@ body {
 }
 </style>
 
-<head>
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://shevastraus.com/arisbarmitzvah/" />
-  <meta property="og:image" content="https://shevastraus.com/logo.png" />
-
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://shevastraus.com/arisbarmitzvah/" />
-  <meta property="twitter:image" content="https://shevastraus.com/bar-mitzvah-invitation.png" />
-</head>
-
-<!-- Meta Tags Generated with https://metatags.io -->
-
-<body>
   <div class="invitation-tabs" role="tablist" aria-label="Invitation pages">
     <button id="invitation-tab" type="button" role="tab" aria-selected="true" aria-controls="invitation-panel">
       Invitation
@@ -309,4 +302,3 @@ body {
       rsvpConfirmation.focus();
     });
   </script>
-</body>
