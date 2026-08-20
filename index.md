@@ -115,6 +115,17 @@ body {
   outline-offset: 2px;
 }
 
+.rsvp-submit:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.rsvp-error {
+  margin: 0 0 1rem;
+  color: #a23a3a;
+  text-align: center;
+}
+
 .rsvp-confirmation {
   max-width: 640px;
   margin: 0 auto;
@@ -232,7 +243,7 @@ body {
     <form
       id="rsvp-form"
       class="rsvp-form"
-      action="https://docs.google.com/forms/d/e/1FAIpQLSeMjFT1dZQsF2rbU44gXQ65m5xb-rm59m5NhOqRh_4zgDl1Lg/formResponse"
+      action="https://script.google.com/macros/s/AKfycbyVmAYGAu6Wr3tbgkmXmgNlRjU_TaUYdrW-ZJPViwaNaqM40fPieA21tfIakd3AFumQ/exec"
       method="post"
       target="rsvp-response-frame">
       <h2>RSVP to Ari's bar mitzvah</h2>
@@ -240,30 +251,33 @@ body {
       <fieldset class="rsvp-question">
         <legend>Can you attend? <span class="required-marker" aria-hidden="true">*</span></legend>
         <label class="radio-option">
-          <input type="radio" name="entry.877086558" value="Yes,  I'll be there" required>
+          <input type="radio" name="attendance" value="Yes" required>
           <span>Yes, I'll be there</span>
         </label>
         <label class="radio-option">
-          <input type="radio" name="entry.877086558" value="Sorry, can't make it" required>
+          <input type="radio" name="attendance" value="No" required>
           <span>Sorry, can't make it</span>
         </label>
       </fieldset>
 
       <div class="rsvp-question">
         <label for="guest-count">How many people will attend Shabbat lunch? <span class="required-marker" aria-hidden="true">*</span></label>
-        <input id="guest-count" type="number" name="entry.439420570" min="0" step="1" inputmode="numeric" required>
+        <input id="guest-count" type="number" name="guestCount" min="0" step="1" inputmode="numeric" required>
       </div>
 
       <div class="rsvp-question">
         <label for="guest-names">What are the names of the guests? <span class="required-marker" aria-hidden="true">*</span></label>
-        <textarea id="guest-names" name="entry.1498135098" required></textarea>
+        <textarea id="guest-names" name="guestNames" required></textarea>
       </div>
 
       <div class="rsvp-question">
         <label for="host-message">Leave a message for your hosts</label>
-        <textarea id="host-message" name="entry.2606285"></textarea>
+        <textarea id="host-message" name="message"></textarea>
       </div>
 
+      <p id="rsvp-error" class="rsvp-error" role="alert" tabindex="-1" hidden>
+        We couldn't submit your RSVP. Please try again.
+      </p>
       <button class="rsvp-submit" type="submit">Submit</button>
     </form>
 
@@ -290,7 +304,10 @@ body {
     const rsvpForm = document.getElementById('rsvp-form');
     const rsvpConfirmation = document.getElementById('rsvp-confirmation');
     const rsvpResponseFrame = document.getElementById('rsvp-response-frame');
+    const rsvpSubmitButton = rsvpForm.querySelector('.rsvp-submit');
+    const rsvpError = document.getElementById('rsvp-error');
     let rsvpSubmitted = false;
+    let rsvpSubmissionTimeout;
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartedOnControl = false;
@@ -340,13 +357,40 @@ body {
       }, { passive: true });
     });
 
+    const showSubmissionError = () => {
+      rsvpSubmitted = false;
+      rsvpSubmitButton.disabled = false;
+      rsvpSubmitButton.textContent = 'Submit';
+      rsvpError.hidden = false;
+      rsvpError.focus();
+    };
+
     rsvpForm.addEventListener('submit', () => {
       rsvpSubmitted = true;
+      rsvpError.hidden = true;
+      rsvpSubmitButton.disabled = true;
+      rsvpSubmitButton.textContent = 'Submitting…';
+
+      clearTimeout(rsvpSubmissionTimeout);
+      rsvpSubmissionTimeout = setTimeout(showSubmissionError, 30000);
     });
 
-    rsvpResponseFrame.addEventListener('load', () => {
-      if (!rsvpSubmitted) return;
+    window.addEventListener('message', (event) => {
+      const responseType = event.data && event.data.type;
+      const responseCameFromSubmissionFrame = event.source === rsvpResponseFrame.contentWindow;
 
+      if (!rsvpSubmitted
+        || !responseCameFromSubmissionFrame
+        || !['rsvp-success', 'rsvp-error'].includes(responseType)) return;
+
+      clearTimeout(rsvpSubmissionTimeout);
+
+      if (responseType === 'rsvp-error') {
+        showSubmissionError();
+        return;
+      }
+
+      rsvpSubmitted = false;
       rsvpForm.hidden = true;
       rsvpConfirmation.hidden = false;
       rsvpConfirmation.focus();
