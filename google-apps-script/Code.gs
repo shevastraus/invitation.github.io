@@ -81,7 +81,7 @@ function messagePage_(type) {
     <html>
       <body>
         <script>
-          window.parent.postMessage(${payload}, ${origin});
+          window.top.postMessage(${payload}, ${origin});
         <\/script>
       </body>
     </html>`;

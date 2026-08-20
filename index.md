@@ -400,15 +400,24 @@ body {
       rsvpSubmitButton.textContent = 'Submitting…';
 
       clearTimeout(rsvpSubmissionTimeout);
-      rsvpSubmissionTimeout = setTimeout(showSubmissionError, 30000);
+      rsvpSubmissionTimeout = setTimeout(showSubmissionError, 15000);
     });
 
     window.addEventListener('message', (event) => {
       const responseType = event.data && event.data.type;
-      const responseCameFromSubmissionFrame = event.source === rsvpResponseFrame.contentWindow;
+      let responseCameFromGoogle = false;
+
+      try {
+        const responseHostname = new URL(event.origin).hostname;
+        responseCameFromGoogle = responseHostname === 'script.google.com'
+          || responseHostname === 'script.googleusercontent.com'
+          || responseHostname.endsWith('-script.googleusercontent.com');
+      } catch (error) {
+        responseCameFromGoogle = false;
+      }
 
       if (!rsvpSubmitted
-        || !responseCameFromSubmissionFrame
+        || !responseCameFromGoogle
         || !['rsvp-success', 'rsvp-error'].includes(responseType)) return;
 
       clearTimeout(rsvpSubmissionTimeout);
